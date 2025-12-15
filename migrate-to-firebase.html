@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Migrate to Firebase</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="public/js/firebase-config.js"></script>
+  </head>
+  <body>
+    <h1>Migrate MySQL to Firebase</h1>
+    <button onclick="migrateClasses()">Migrate Classes</button>
+    <div id="status"></div>
+
+    <script>
+      async function migrateClasses() {
+        const status = document.getElementById("status");
+        status.innerHTML = "Migrating...";
+
+        // Get data from MySQL (manually copy from phpMyAdmin)
+        const classes = [
+          {
+            edpCode: "15602",
+            courseSubject: "CPE 412",
+            instructor: "Instructor Name",
+            roomNumber: "431",
+            startTime: "17:50:00",
+            endTime: "18:00:00",
+            days: "MON, WED, SAT",
+          },
+          // Add more classes...
+        ];
+
+        try {
+          for (const cls of classes) {
+            await classesCollection.add({
+              ...cls,
+              createdAt: firebase.firestore.Timestamp.now(),
+            });
+          }
+          status.innerHTML = "Migration complete!";
+        } catch (error) {
+          status.innerHTML = "Error: " + error.message;
+        }
+      }
+    </script>
+  </body>
+</html>

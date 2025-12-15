@@ -1,96 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="public/js/firebase-config.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DeskLab - Active Session</title>
-    <link rel="stylesheet" href="public/css/session.css">
-</head>
-<body>
+    <link rel="stylesheet" href="public/css/session.css" />
+  </head>
+  <body>
     <div class="session-container">
-        <div class="header">
-            <h1>DeskLab - Active Session</h1>
-            <div class="session-timer">
-                <span id="sessionTime">00:00:00</span>
-            </div>
+      <div class="header">
+        <h1>DeskLab - Active Session</h1>
+        <div class="session-timer">
+          <span id="sessionTime">00:00:00</span>
+        </div>
+      </div>
+
+      <div class="session-info">
+        <div class="info-card">
+          <h3>Student Information</h3>
+          <div class="info-row">
+            <span class="label">Name:</span>
+            <span class="value" id="studentName">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">ID:</span>
+            <span class="value" id="studentId">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Year & Section:</span>
+            <span class="value" id="yearSection">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Room:</span>
+            <span class="value" id="roomNumber">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Time In:</span>
+            <span class="value" id="timeIn">-</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Duration:</span>
+            <span class="value" id="sessionDuration">00:00:00</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Status:</span>
+            <span class="value status-badge" id="status">-</span>
+          </div>
         </div>
 
-        <div class="session-info">
-            <div class="info-card">
-                <h3>Student Information</h3>
-                <div class="info-row">
-                    <span class="label">Name:</span>
-                    <span class="value" id="studentName">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">ID:</span>
-                    <span class="value" id="studentId">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Year & Section:</span>
-                    <span class="value" id="yearSection">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Room:</span>
-                    <span class="value" id="roomNumber">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Time In:</span>
-                    <span class="value" id="timeIn">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Status:</span>
-                    <span class="value status-badge" id="status">-</span>
-                </div>
-            </div>
-
-            <div class="action-card">
-                <h3>Session Actions</h3>
-                <button class="btn btn-danger" onclick="confirmLogout()">Logout</button>
-                <p class="logout-note">Click to end your session</p>
-            </div>
+        <div class="action-card">
+          <h3>Session Actions</h3>
+          <button class="btn btn-danger" id="logoutBtn">
+            Logout
+          </button>
+          <p class="logout-note">Click to end your session (or press Ctrl+L)</p>
         </div>
+      </div>
 
-        <div class="warning-box" id="warningBox" style="display: none;">
-            <h3>⚠️ Important Notice</h3>
-            <p id="warningText"></p>
-        </div>
+      <div class="warning-box" id="warningBox" style="display: none">
+        <h3>⚠️ Important Notice</h3>
+        <p id="warningText"></p>
+      </div>
 
-        <div class="instructions">
-            <h3>Session Instructions</h3>
-            <ul>
-                <li>You must logout before leaving the computer</li>
-                <li>If a class is about to start, you will receive a notification</li>
-                <li>Keep your session active and don't close this window</li>
-                <li>Follow all laboratory rules and regulations</li>
-            </ul>
-        </div>
+      <div class="instructions">
+        <h3>Session Instructions</h3>
+        <ul>
+          <li>You must logout before leaving the computer</li>
+          <li>If a class is about to start, you will receive a notification</li>
+          <li>Keep your session active and don't close this window</li>
+          <li>Follow all laboratory rules and regulations</li>
+        </ul>
+      </div>
     </div>
 
-    <!-- Warning Popup -->
-    <div id="classWarningPopup" class="popup hidden">
-        <div class="popup-content warning">
-            <h3>⚠️ Class Starting Soon</h3>
-            <p id="popupWarningText"></p>
-            <div class="countdown">
-                <span id="countdownMinutes">10</span> minutes remaining
-            </div>
-            <button class="btn btn-warning" onclick="closeWarningPopup()">I Understand</button>
-        </div>
-    </div>
-
-    <!-- Logout Confirmation -->
-    <div id="logoutConfirmPopup" class="popup hidden">
-        <div class="popup-content">
-            <h3>Confirm Logout</h3>
-            <p>Are you sure you want to end your session?</p>
-            <div class="button-group">
-                <button class="btn btn-danger" onclick="performLogout()">Yes, Logout</button>
-                <button class="btn btn-secondary" onclick="closeLogoutConfirm()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="public/js/session.js"></script>
-</body>
+    <!-- Firebase Helpers -->
+    <script src="public/js/firebase-helpers.js"></script>
+    <!-- Session Firebase Logic -->
+    <script src="public/js/session-firebase.js"></script>
+  </body>
 </html>

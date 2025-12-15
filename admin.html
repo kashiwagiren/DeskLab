@@ -1,233 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="public/js/firebase-config.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DeskLab - Admin Dashboard</title>
-    <link rel="stylesheet" href="public/css/admin.css">
-</head>
-<body>
+    <link rel="stylesheet" href="public/css/admin.css" />
+  </head>
+  <body>
     <div class="dashboard">
-        <div class="sidebar">
-            <div class="logo">
-                <h2>DeskLab Admin</h2>
-            </div>
-            <nav class="nav-menu">
-                <a href="#" class="nav-item active" onclick="showPanel('overview')">
-                    <span class="icon">📊</span> Overview
-                </a>
-                <a href="#" class="nav-item" onclick="showPanel('pending')">
-                    <span class="icon">⏳</span> Pending Requests
-                    <span class="badge" id="pendingCount">0</span>
-                </a>
-                <a href="#" class="nav-item" onclick="showPanel('active')">
-                    <span class="icon">👥</span> Active Users
-                    <span class="badge" id="activeCount">0</span>
-                </a>
-                <a href="#" class="nav-item" onclick="showPanel('logs')">
-                    <span class="icon">📋</span> Login Logs
-                </a>
-                <a href="#" class="nav-item" onclick="showPanel('register')">
-                    <span class="icon">➕</span> Register Student
-                </a>
-                <a href="#" class="nav-item" onclick="showPanel('classes')">
-                    <span class="icon">📚</span> Manage Classes
-                </a>
-                <a href="console.html" class="nav-item" target="_blank" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px;">
-                    <span class="icon">🔍</span> Debug Console
-                </a>
-            </nav>
+      <div class="sidebar">
+        <div class="logo">
+          <h2>DeskLab Admin</h2>
+        </div>
+        <nav class="nav-menu">
+          <a href="#" class="nav-item active" onclick="showPanel('overview')">
+            <span class="icon">📊</span> Overview
+          </a>
+          <a href="#" class="nav-item" onclick="showPanel('pending')">
+            <span class="icon">⏳</span> Pending Requests
+            <span class="badge" id="pendingCount">0</span>
+          </a>
+          <a href="#" class="nav-item" onclick="showPanel('active')">
+            <span class="icon">👥</span> Active Users
+            <span class="badge" id="activeCount">0</span>
+          </a>
+          <a href="#" class="nav-item" onclick="showPanel('logs')">
+            <span class="icon">📋</span> Login Logs
+          </a>
+          <a href="#" class="nav-item" onclick="showPanel('register')">
+            <span class="icon">➕</span> Register Student
+          </a>
+          <a href="#" class="nav-item" onclick="showPanel('classes')">
+            <span class="icon">📚</span> Manage Classes
+          </a>
+          <a
+            href="console.html"
+            class="nav-item"
+            target="_blank"
+            style="
+              border-top: 1px solid rgba(255, 255, 255, 0.1);
+              margin-top: 10px;
+              padding-top: 10px;
+            "
+          >
+            <span class="icon">🔍</span> Debug Console
+          </a>
+        </nav>
+      </div>
+
+      <div class="main-content">
+        <div class="header">
+          <h1 id="panelTitle">Dashboard Overview</h1>
+          <div class="header-actions">
+            <div class="clock" id="clock"></div>
+            <span style="color: #718096; font-size: 0.85em; margin-left: 15px"
+              >Auto-refresh: 5s</span
+            >
+          </div>
         </div>
 
-        <div class="main-content">
-            <div class="header">
-                <h1 id="panelTitle">Dashboard Overview</h1>
-                <div class="header-actions">
-                    <div class="clock" id="clock"></div>
-                    <span style="color: #718096; font-size: 0.85em; margin-left: 15px;">Auto-refresh: 5s</span>
-                </div>
+        <!-- Overview Panel -->
+        <div id="overviewPanel" class="panel active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">⏳</div>
+              <div class="stat-info">
+                <h3 id="statPending">0</h3>
+                <p>Pending Requests</p>
+              </div>
             </div>
-
-            <!-- Overview Panel -->
-            <div id="overviewPanel" class="panel active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-info">
-                            <h3 id="statPending">0</h3>
-                            <p>Pending Requests</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">👥</div>
-                        <div class="stat-info">
-                            <h3 id="statActive">0</h3>
-                            <p>Active Users</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📚</div>
-                        <div class="stat-info">
-                            <h3 id="statCurrentClass">No Class</h3>
-                            <p>Current Class</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⚠️</div>
-                        <div class="stat-info">
-                            <h3 id="statUpcoming">None</h3>
-                            <p>Upcoming Class</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert-panel" id="upcomingAlert" style="display: none;">
-                    <h3>⚠️ Class Starting Soon</h3>
-                    <p id="upcomingMessage"></p>
-                </div>
-
-                <div class="quick-actions">
-                    <h3>Quick Actions</h3>
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="showPanel('pending')">View Pending Requests</button>
-                        <button class="btn btn-success" onclick="showPanel('register')">Register New Student</button>
-                        <button class="btn btn-info" onclick="showPanel('classes')">Manage Classes</button>
-                    </div>
-                </div>
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-info">
+                <h3 id="statActive">0</h3>
+                <p>Active Users</p>
+              </div>
             </div>
-
-            <!-- Pending Requests Panel -->
-            <div id="pendingPanel" class="panel">
-                <div class="panel-header">
-                    <h2>Pending Sit-in Requests</h2>
-                </div>
-                <div id="pendingRequestsList" class="table-container"></div>
+            <div class="stat-card">
+              <div class="stat-icon">📚</div>
+              <div class="stat-info">
+                <h3 id="statCurrentClass">No Class</h3>
+                <p>Current Class</p>
+              </div>
             </div>
-
-            <!-- Active Users Panel -->
-            <div id="activePanel" class="panel">
-                <div class="panel-header">
-                    <h2>Currently Logged In Users</h2>
-                </div>
-                <div id="activeUsersList" class="table-container"></div>
+            <div class="stat-card">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-info">
+                <h3 id="statUpcoming">None</h3>
+                <p>Upcoming Class</p>
+              </div>
             </div>
+          </div>
 
-            <!-- Login Logs Panel -->
-            <div id="logsPanel" class="panel">
-                <div class="panel-header">
-                    <h2>Login History</h2>
-                    <div class="filter-group">
-                        <input type="date" id="logDateFilter" onchange="loadLogs()">
-                        <select id="logStatusFilter" onchange="loadLogs()">
-                            <option value="">All Statuses</option>
-                            <option value="Enrolled (Allowed)">Enrolled</option>
-                            <option value="No class - Auto Allowed">Auto Allowed</option>
-                            <option value="Admin Approved">Admin Approved</option>
-                            <option value="Denied">Denied</option>
-                        </select>
-                        <button class="btn btn-secondary" onclick="loadLogs()">Filter</button>
-                    </div>
-                </div>
-                <div id="logsList" class="table-container"></div>
+          <div class="alert-panel" id="upcomingAlert" style="display: none">
+            <h3>⚠️ Class Starting Soon</h3>
+            <p id="upcomingMessage"></p>
+          </div>
+
+          <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <div class="button-group">
+              <button class="btn btn-primary" onclick="showPanel('pending')">
+                View Pending Requests
+              </button>
+              <button class="btn btn-success" onclick="showPanel('register')">
+                Register New Student
+              </button>
+              <button class="btn btn-info" onclick="showPanel('classes')">
+                Manage Classes
+              </button>
             </div>
-
-            <!-- Register Student Panel -->
-            <div id="registerPanel" class="panel">
-                <div class="panel-header">
-                    <h2>Register New Student</h2>
-                </div>
-                <div class="form-container">
-                    <form id="registerStudentForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="regStudentId">Student ID (8 digits):</label>
-                                <input type="text" id="regStudentId" maxlength="8" pattern="[0-9]{8}" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="regStudentName">Student Name:</label>
-                                <input type="text" id="regStudentName" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="regYearSection">Year & Section:</label>
-                                <input type="text" id="regYearSection" required>
-                            </div>
-                        </div>
-                        <h3>Enrolled Classes</h3>
-                        <div id="classEnrollmentList"></div>
-                        <button type="submit" class="btn btn-success">Register Student</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Manage Classes Panel -->
-            <div id="classesPanel" class="panel">
-                <div class="panel-header">
-                    <h2>Manage Classes</h2>
-                    <button class="btn btn-success" onclick="showAddClassForm()">+ Add Class</button>
-                </div>
-
-                <div id="addClassForm" class="form-container" style="display: none;">
-                    <h3>Add New Class</h3>
-                    <form id="newClassForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="edpCode">EDP Code (5 digits):</label>
-                                <input type="text" id="edpCode" maxlength="5" pattern="[0-9]{5}" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="courseSubject">Course Subject:</label>
-                                <input type="text" id="courseSubject" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="instructor">Instructor:</label>
-                                <input type="text" id="instructor" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="roomNumber">Room Number:</label>
-                                <input type="text" id="roomNumber" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="startTime">Start Time:</label>
-                                <input type="time" id="startTime" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="endTime">End Time:</label>
-                                <input type="time" id="endTime" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Days:</label>
-                            <div class="checkbox-group">
-                                <label><input type="checkbox" name="days" value="MON"> Monday</label>
-                                <label><input type="checkbox" name="days" value="TUE"> Tuesday</label>
-                                <label><input type="checkbox" name="days" value="WED"> Wednesday</label>
-                                <label><input type="checkbox" name="days" value="THU"> Thursday</label>
-                                <label><input type="checkbox" name="days" value="FRI"> Friday</label>
-                                <label><input type="checkbox" name="days" value="SAT"> Saturday</label>
-                                <label><input type="checkbox" name="days" value="SUN"> Sunday</label>
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button type="submit" class="btn btn-success">Add Class</button>
-                            <button type="button" class="btn btn-secondary" onclick="hideAddClassForm()">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div id="classesList" class="table-container"></div>
-            </div>
+          </div>
         </div>
+
+        <!-- Pending Requests Panel -->
+        <div id="pendingPanel" class="panel">
+          <div class="panel-header">
+            <h2>Pending Sit-in Requests</h2>
+          </div>
+          <div id="pendingRequestsList" class="table-container"></div>
+        </div>
+
+        <!-- Active Users Panel -->
+        <div id="activePanel" class="panel">
+          <div class="panel-header">
+            <h2>Currently Logged In Users</h2>
+          </div>
+          <div id="activeUsersList" class="table-container"></div>
+        </div>
+
+        <!-- Login Logs Panel -->
+        <div id="logsPanel" class="panel">
+          <div class="panel-header">
+            <h2>Login History</h2>
+            <div class="filter-group">
+              <input type="date" id="logDateFilter" onchange="loadLogs()" />
+              <select id="logStatusFilter" onchange="loadLogs()">
+                <option value="">All Statuses</option>
+                <option value="Enrolled (Allowed)">Enrolled</option>
+                <option value="No class - Auto Allowed">Auto Allowed</option>
+                <option value="Admin Approved">Admin Approved</option>
+                <option value="Denied">Denied</option>
+              </select>
+              <button class="btn btn-secondary" onclick="loadLogs()">
+                Filter
+              </button>
+            </div>
+          </div>
+          <div id="logsList" class="table-container"></div>
+        </div>
+
+        <!-- Register Student Panel -->
+        <div id="registerPanel" class="panel">
+          <div class="panel-header">
+            <h2>Register New Student</h2>
+          </div>
+          <div class="form-container">
+            <form id="registerStudentForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="regStudentId">Student ID (8 digits):</label>
+                  <input
+                    type="text"
+                    id="regStudentId"
+                    maxlength="8"
+                    pattern="[0-9]{8}"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="regStudentName">Student Name:</label>
+                  <input type="text" id="regStudentName" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="regYearSection">Year & Section:</label>
+                  <input type="text" id="regYearSection" required />
+                </div>
+              </div>
+              <h3>Enrolled Classes</h3>
+              <div id="classEnrollmentList"></div>
+              <button type="submit" class="btn btn-success">
+                Register Student
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Manage Classes Panel -->
+        <div id="classesPanel" class="panel">
+          <div class="panel-header">
+            <h2>Manage Classes</h2>
+            <button class="btn btn-success" onclick="showAddClassForm()">
+              + Add Class
+            </button>
+          </div>
+
+          <div id="addClassForm" class="form-container" style="display: none">
+            <h3>Add New Class</h3>
+            <form id="newClassForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="edpCode">EDP Code (5 digits):</label>
+                  <input
+                    type="text"
+                    id="edpCode"
+                    maxlength="5"
+                    pattern="[0-9]{5}"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="courseSubject">Course Subject:</label>
+                  <input type="text" id="courseSubject" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="instructor">Instructor:</label>
+                  <input type="text" id="instructor" required />
+                </div>
+                <div class="form-group">
+                  <label for="roomNumber">Room Number:</label>
+                  <input type="text" id="roomNumber" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="startTime">Start Time:</label>
+                  <input type="time" id="startTime" required />
+                </div>
+                <div class="form-group">
+                  <label for="endTime">End Time:</label>
+                  <input type="time" id="endTime" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Days:</label>
+                <div class="checkbox-group">
+                  <label
+                    ><input type="checkbox" name="days" value="MON" />
+                    Monday</label
+                  >
+                  <label
+                    ><input type="checkbox" name="days" value="TUE" />
+                    Tuesday</label
+                  >
+                  <label
+                    ><input type="checkbox" name="days" value="WED" />
+                    Wednesday</label
+                  >
+                  <label
+                    ><input type="checkbox" name="days" value="THU" />
+                    Thursday</label
+                  >
+                  <label
+                    ><input type="checkbox" name="days" value="FRI" />
+                    Friday</label
+                  >
+                  <label
+                    ><input type="checkbox" name="days" value="SAT" />
+                    Saturday</label
+                  >
+                  <label
+                    ><input type="checkbox" name="days" value="SUN" />
+                    Sunday</label
+                  >
+                </div>
+              </div>
+              <div class="button-group">
+                <button type="submit" class="btn btn-success">Add Class</button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  onclick="hideAddClassForm()"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div id="classesList" class="table-container"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Notification Toast -->
     <div id="toast" class="toast"></div>
 
-    <script src="public/js/admin.js"></script>
-</body>
+    <!-- Firebase Helpers -->
+    <script src="public/js/firebase-helpers.js"></script>
+    <!-- Admin Firebase Logic -->
+    <script src="public/js/admin-firebase.js"></script>
+  </body>
 </html>
