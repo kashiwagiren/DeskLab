@@ -98,34 +98,51 @@ async function loadOverviewStats() {
 }
 
 function updateOverviewStats(pendingCount, activeCount, currentClass, upcomingClass) {
-  // Update counts
-  document.getElementById('pendingCount').textContent = pendingCount;
-  document.getElementById('activeCount').textContent = activeCount;
+  // Update badge counts
+  const pendingBadge = document.getElementById('pendingCount');
+  if (pendingBadge) pendingBadge.textContent = pendingCount;
 
-  // Update current class
-  const currentClassDiv = document.getElementById('currentClass');
-  if (currentClass) {
-    currentClassDiv.innerHTML = `
-      <strong>${currentClass.courseSubject}</strong><br>
-      ${currentClass.instructor}<br>
-      Room ${currentClass.roomNumber}<br>
-      ${currentClass.startTime} - ${currentClass.endTime}
-    `;
-  } else {
-    currentClassDiv.innerHTML = '<em>No class in session</em>';
+  const activeBadge = document.getElementById('activeCount');
+  if (activeBadge) activeBadge.textContent = activeCount;
+
+  // Update stat cards
+  const statPending = document.getElementById('statPending');
+  if (statPending) statPending.textContent = pendingCount;
+
+  const statActive = document.getElementById('statActive');
+  if (statActive) statActive.textContent = activeCount;
+
+  // Update current class stat
+  const statCurrentClass = document.getElementById('statCurrentClass');
+  if (statCurrentClass) {
+    if (currentClass) {
+      statCurrentClass.textContent = currentClass.courseSubject;
+    } else {
+      statCurrentClass.textContent = 'No Class';
+    }
   }
 
-  // Update upcoming class
-  const upcomingClassDiv = document.getElementById('upcomingClass');
-  if (upcomingClass) {
-    upcomingClassDiv.innerHTML = `
-      <strong>${upcomingClass.courseSubject}</strong><br>
-      ${upcomingClass.instructor}<br>
-      Room ${upcomingClass.roomNumber}<br>
-      Starts at ${upcomingClass.startTime}
+  // Update upcoming class stat
+  const statUpcoming = document.getElementById('statUpcoming');
+  if (statUpcoming) {
+    if (upcomingClass) {
+      statUpcoming.textContent = upcomingClass.courseSubject;
+    } else {
+      statUpcoming.textContent = 'None';
+    }
+  }
+
+  // Show upcoming alert if there's a class soon
+  const upcomingAlert = document.getElementById('upcomingAlert');
+  const upcomingMessage = document.getElementById('upcomingMessage');
+  if (upcomingClass && upcomingAlert && upcomingMessage) {
+    upcomingAlert.style.display = 'block';
+    upcomingMessage.innerHTML = `
+      <strong>${upcomingClass.courseSubject}</strong> with ${upcomingClass.instructor}<br>
+      Room ${upcomingClass.roomNumber} - Starts at ${upcomingClass.startTime}
     `;
-  } else {
-    upcomingClassDiv.innerHTML = '<em>No upcoming classes today</em>';
+  } else if (upcomingAlert) {
+    upcomingAlert.style.display = 'none';
   }
 }
 
@@ -134,7 +151,7 @@ function updateOverviewStats(pendingCount, activeCount, currentClass, upcomingCl
 // ===========================
 
 function displayPendingRequests(requests) {
-  const container = document.getElementById('pendingRequestsContainer');
+  const container = document.getElementById('pendingRequestsList');
 
   if (!container) {
     console.warn('Pending requests container not found');
@@ -146,42 +163,35 @@ function displayPendingRequests(requests) {
     return;
   }
 
-  let html = '<div class="requests-list">';
+  let html = '<table class="data-table"><thead><tr>';
+  html += '<th>Student Name</th><th>ID</th><th>Year/Section</th><th>Room</th><th>Purpose</th><th>Requested</th><th>Actions</th>';
+  html += '</tr></thead><tbody>';
 
   requests.forEach(req => {
     const requestTime = req.requestTime ? formatDateTime(req.requestTime) : 'Unknown';
 
     html += `
-      <div class="request-card">
-        <div class="request-header">
-          <strong>${req.studentName || 'Unknown'}</strong>
-          <span class="badge badge-warning">Pending</span>
-        </div>
-        <div class="request-details">
-          <p><strong>ID:</strong> ${req.studentId || 'N/A'}</p>
-          <p><strong>Year/Section:</strong> ${req.yearSection || 'N/A'}</p>
-          <p><strong>Room:</strong> ${req.roomNumber || 'N/A'}</p>
-          <p><strong>Purpose:</strong> ${req.purpose || 'Not specified'}</p>
-          <p><strong>Requested:</strong> ${requestTime}</p>
-        </div>
-        <div class="request-actions">
-          <button class="btn btn-success btn-sm" onclick="approveRequest('${req.id}')">
-            Approve
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="rejectRequest('${req.id}')">
-            Reject
-          </button>
-        </div>
-      </div>
+      <tr>
+        <td>${req.studentName || 'Unknown'}</td>
+        <td>${req.studentId || 'N/A'}</td>
+        <td>${req.yearSection || 'N/A'}</td>
+        <td>${req.roomNumber || 'N/A'}</td>
+        <td>${req.purpose || 'Not specified'}</td>
+        <td>${requestTime}</td>
+        <td>
+          <button class="btn btn-success btn-sm" onclick="approveRequest('${req.id}')">Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectRequest('${req.id}')">Reject</button>
+        </td>
+      </tr>
     `;
   });
 
-  html += '</div>';
+  html += '</tbody></table>';
   container.innerHTML = html;
 }
 
 function displayActiveUsers(users) {
-  const container = document.getElementById('activeUsersContainer');
+  const container = document.getElementById('activeUsersList');
 
   if (!container) {
     console.warn('Active users container not found');
@@ -193,36 +203,31 @@ function displayActiveUsers(users) {
     return;
   }
 
-  let html = '<div class="users-list">';
+  let html = '<table class="data-table"><thead><tr>';
+  html += '<th>Student Name</th><th>ID</th><th>Year/Section</th><th>Room</th><th>Status</th><th>Time In</th><th>Duration</th><th>Action</th>';
+  html += '</tr></thead><tbody>';
 
   users.forEach(user => {
     const timeIn = user.timeIn ? formatDateTime(user.timeIn) : 'Unknown';
     const duration = user.timeIn ? calculateDuration(user.timeIn, null) : 'N/A';
 
     html += `
-      <div class="user-card">
-        <div class="user-header">
-          <strong>${user.studentName || 'Unknown'}</strong>
-          <span class="badge badge-success">Active</span>
-        </div>
-        <div class="user-details">
-          <p><strong>ID:</strong> ${user.studentId || 'N/A'}</p>
-          <p><strong>Year/Section:</strong> ${user.yearSection || 'N/A'}</p>
-          <p><strong>Room:</strong> ${user.roomNumber || 'N/A'}</p>
-          <p><strong>Status:</strong> ${user.status || 'N/A'}</p>
-          <p><strong>Time In:</strong> ${timeIn}</p>
-          <p><strong>Duration:</strong> ${duration}</p>
-        </div>
-        <div class="user-actions">
-          <button class="btn btn-warning btn-sm" onclick="forceLogout('${user.id}')">
-            Force Logout
-          </button>
-        </div>
-      </div>
+      <tr>
+        <td>${user.studentName || 'Unknown'}</td>
+        <td>${user.studentId || 'N/A'}</td>
+        <td>${user.yearSection || 'N/A'}</td>
+        <td>${user.roomNumber || 'N/A'}</td>
+        <td>${user.status || 'N/A'}</td>
+        <td>${timeIn}</td>
+        <td>${duration}</td>
+        <td>
+          <button class="btn btn-warning btn-sm" onclick="forceLogout('${user.id}')">Force Logout</button>
+        </td>
+      </tr>
     `;
   });
 
-  html += '</div>';
+  html += '</tbody></table>';
   container.innerHTML = html;
 }
 
@@ -311,37 +316,13 @@ async function forceLogout(loginId) {
 // Class Management
 // ===========================
 
-async function loadRoomsList() {
-  try {
-    const snapshot = await classesCollection.get();
-    const rooms = new Set();
-
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.roomNumber) {
-        rooms.add(data.roomNumber);
-      }
-    });
-
-    const roomSelect = document.getElementById('classRoomNumber');
-    if (roomSelect) {
-      roomSelect.innerHTML = '<option value="">-- Select Room --</option>';
-      Array.from(rooms).sort().forEach(room => {
-        roomSelect.innerHTML += `<option value="${room}">${room}</option>`;
-      });
-    }
-  } catch (error) {
-    console.error('Error loading rooms list:', error);
-  }
-}
-
 async function addClass(event) {
   event.preventDefault();
 
   const edpCode = document.getElementById('edpCode').value.trim();
   const courseSubject = document.getElementById('courseSubject').value.trim();
   const instructor = document.getElementById('instructor').value.trim();
-  const roomNumber = document.getElementById('classRoomNumber').value;
+  const roomNumber = document.getElementById('roomNumber').value.trim();
   const startTime = document.getElementById('startTime').value;
   const endTime = document.getElementById('endTime').value;
 
@@ -355,13 +336,17 @@ async function addClass(event) {
   }
 
   try {
+    // Convert time to HH:MM:SS format
+    const startTimeFull = startTime + ':00';
+    const endTimeFull = endTime + ':00';
+
     await classesCollection.add({
       edpCode: edpCode,
       courseSubject: courseSubject,
       instructor: instructor,
       roomNumber: roomNumber,
-      startTime: startTime,
-      endTime: endTime,
+      startTime: startTimeFull,
+      endTime: endTimeFull,
       days: days,
       createdAt: getCurrentTimestamp()
     });
@@ -370,6 +355,9 @@ async function addClass(event) {
 
     // Reset form
     event.target.reset();
+
+    // Hide form
+    hideAddClassForm();
 
     // Reload classes list
     loadClassesList();
@@ -381,43 +369,39 @@ async function addClass(event) {
 
 async function loadClassesList() {
   try {
-    const snapshot = await classesCollection.orderBy('createdAt', 'desc').get();
-    const container = document.getElementById('classesListContainer');
+    const snapshot = await classesCollection.get();
+    const container = document.getElementById('classesList');
 
     if (!container) return;
 
     if (snapshot.empty) {
-      container.innerHTML = '<p class="no-data">No classes found</p>';
+      container.innerHTML = '<p class="no-data">No classes found. Click "Add Class" to create one.</p>';
       return;
     }
 
-    let html = '<div class="classes-list">';
+    let html = '<table class="data-table"><thead><tr>';
+    html += '<th>EDP Code</th><th>Course/Subject</th><th>Instructor</th><th>Room</th><th>Days</th><th>Time</th><th>Action</th>';
+    html += '</tr></thead><tbody>';
 
     snapshot.forEach(doc => {
       const cls = { id: doc.id, ...doc.data() };
 
       html += `
-        <div class="class-card">
-          <div class="class-header">
-            <strong>${cls.courseSubject}</strong>
-            <span class="badge badge-info">${cls.edpCode}</span>
-          </div>
-          <div class="class-details">
-            <p><strong>Instructor:</strong> ${cls.instructor}</p>
-            <p><strong>Room:</strong> ${cls.roomNumber}</p>
-            <p><strong>Schedule:</strong> ${cls.days}</p>
-            <p><strong>Time:</strong> ${cls.startTime} - ${cls.endTime}</p>
-          </div>
-          <div class="class-actions">
-            <button class="btn btn-danger btn-sm" onclick="deleteClass('${cls.id}')">
-              Delete
-            </button>
-          </div>
-        </div>
+        <tr>
+          <td>${cls.edpCode}</td>
+          <td>${cls.courseSubject}</td>
+          <td>${cls.instructor}</td>
+          <td>${cls.roomNumber}</td>
+          <td>${cls.days}</td>
+          <td>${cls.startTime} - ${cls.endTime}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="deleteClass('${cls.id}')">Delete</button>
+          </td>
+        </tr>
       `;
     });
 
-    html += '</div>';
+    html += '</tbody></table>';
     container.innerHTML = html;
   } catch (error) {
     console.error('Error loading classes:', error);
@@ -446,30 +430,29 @@ async function deleteClass(classId) {
 async function loadStudentsForEnrollment() {
   try {
     const snapshot = await classesCollection.get();
-    const container = document.getElementById('enrollmentClassesContainer');
+    const container = document.getElementById('classEnrollmentList');
 
     if (!container) return;
 
     if (snapshot.empty) {
-      container.innerHTML = '<p class="no-data">No classes available</p>';
+      container.innerHTML = '<p class="no-data">No classes available. Please add classes first.</p>';
       return;
     }
 
-    let html = '';
+    let html = '<div class="checkbox-group">';
 
     snapshot.forEach(doc => {
       const cls = { id: doc.id, ...doc.data() };
 
       html += `
-        <div class="enrollment-class">
-          <label>
-            <input type="checkbox" name="enrollmentClasses" value="${cls.id}">
-            <strong>${cls.courseSubject}</strong> - ${cls.instructor} (Room ${cls.roomNumber})
-          </label>
-        </div>
+        <label>
+          <input type="checkbox" name="enrollmentClasses" value="${cls.id}">
+          ${cls.courseSubject} - ${cls.instructor} (Room ${cls.roomNumber}, ${cls.days} ${cls.startTime})
+        </label>
       `;
     });
 
+    html += '</div>';
     container.innerHTML = html;
   } catch (error) {
     console.error('Error loading classes for enrollment:', error);
@@ -479,9 +462,9 @@ async function loadStudentsForEnrollment() {
 async function registerStudent(event) {
   event.preventDefault();
 
-  const studentId = document.getElementById('studentId').value.trim();
-  const studentName = document.getElementById('studentName').value.trim();
-  const yearSection = document.getElementById('studentYearSection').value.trim();
+  const studentId = document.getElementById('regStudentId').value.trim();
+  const studentName = document.getElementById('regStudentName').value.trim();
+  const yearSection = document.getElementById('regYearSection').value.trim();
 
   // Get selected classes
   const selectedClasses = Array.from(
@@ -524,10 +507,13 @@ async function registerStudent(event) {
       });
     }
 
-    showNotification('Success', 'Student registered successfully');
+    showNotification('Success', `Student ${studentName} registered with ${selectedClasses.length} class(es)`);
 
     // Reset form
     event.target.reset();
+
+    // Reload enrollment list to uncheck all
+    loadStudentsForEnrollment();
 
   } catch (error) {
     console.error('Error registering student:', error);
@@ -546,7 +532,7 @@ async function loadLoginLogs() {
       .limit(100)
       .get();
 
-    const container = document.getElementById('logsContainer');
+    const container = document.getElementById('logsList');
 
     if (!container) return;
 
@@ -555,7 +541,7 @@ async function loadLoginLogs() {
       return;
     }
 
-    let html = '<table class="logs-table">';
+    let html = '<table class="data-table">';
     html += `
       <thead>
         <tr>
@@ -599,6 +585,11 @@ async function loadLoginLogs() {
   }
 }
 
+// Add loadLogs function for filter button compatibility
+function loadLogs() {
+  loadLoginLogs();
+}
+
 // ===========================
 // Helper Functions
 // ===========================
@@ -616,34 +607,66 @@ function showNotification(title, message) {
 // Navigation
 // ===========================
 
-function showSection(sectionId) {
-  // Hide all sections
-  const sections = document.querySelectorAll('.admin-section');
-  sections.forEach(section => section.classList.add('hidden'));
+function showPanel(panelName) {
+  // Hide all panels
+  const panels = document.querySelectorAll('.panel');
+  panels.forEach(panel => panel.classList.remove('active'));
 
-  // Show selected section
-  const selectedSection = document.getElementById(sectionId);
-  if (selectedSection) {
-    selectedSection.classList.remove('hidden');
+  // Show selected panel
+  const selectedPanel = document.getElementById(panelName + 'Panel');
+  if (selectedPanel) {
+    selectedPanel.classList.add('active');
   }
 
   // Update nav active state
-  const navButtons = document.querySelectorAll('.nav-btn');
-  navButtons.forEach(btn => btn.classList.remove('active'));
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => item.classList.remove('active'));
 
-  const activeBtn = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
-  if (activeBtn) {
-    activeBtn.classList.add('active');
+  const activeItem = document.querySelector(`[onclick="showPanel('${panelName}')"]`);
+  if (activeItem) {
+    activeItem.classList.add('active');
   }
 
-  // Load data for specific sections
-  if (sectionId === 'logsSection') {
+  // Update page title
+  const titles = {
+    'overview': 'Dashboard Overview',
+    'pending': 'Pending Requests',
+    'active': 'Active Users',
+    'logs': 'Login Logs',
+    'register': 'Register Student',
+    'classes': 'Manage Classes'
+  };
+
+  const titleEl = document.getElementById('panelTitle');
+  if (titleEl) {
+    titleEl.textContent = titles[panelName] || 'Admin Dashboard';
+  }
+
+  // Load data for specific panels
+  if (panelName === 'logs') {
     loadLoginLogs();
-  } else if (sectionId === 'classesSection') {
+  } else if (panelName === 'classes') {
     loadClassesList();
-    loadRoomsList();
-  } else if (sectionId === 'studentsSection') {
+  } else if (panelName === 'register') {
     loadStudentsForEnrollment();
+  }
+}
+
+function showAddClassForm() {
+  const form = document.getElementById('addClassForm');
+  if (form) {
+    form.style.display = 'block';
+  }
+}
+
+function hideAddClassForm() {
+  const form = document.getElementById('addClassForm');
+  if (form) {
+    form.style.display = 'none';
+  }
+  const classForm = document.getElementById('newClassForm');
+  if (classForm) {
+    classForm.reset();
   }
 }
 
@@ -663,10 +686,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Refresh overview stats every 30 seconds
   setInterval(loadOverviewStats, 30000);
 
+  // Setup clock
+  updateClock();
+  setInterval(updateClock, 1000);
+
   // Setup form handlers
-  const addClassForm = document.getElementById('addClassForm');
-  if (addClassForm) {
-    addClassForm.addEventListener('submit', addClass);
+  const newClassForm = document.getElementById('newClassForm');
+  if (newClassForm) {
+    newClassForm.addEventListener('submit', addClass);
   }
 
   const registerStudentForm = document.getElementById('registerStudentForm');
@@ -676,6 +703,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log('Admin dashboard ready!');
 });
+
+// Clock update function
+function updateClock() {
+  const clockEl = document.getElementById('clock');
+  if (clockEl) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    clockEl.textContent = timeString;
+  }
+}
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
