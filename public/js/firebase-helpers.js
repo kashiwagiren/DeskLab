@@ -66,15 +66,22 @@ function isDayMatch(daysString, currentDay) {
 
 // Calculate duration between two timestamps
 function calculateDuration(startTimestamp, endTimestamp) {
-  if (!startTimestamp || !endTimestamp) return 'Active';
-  
+  if (!startTimestamp) return 'N/A';
+
   const start = startTimestamp.toDate();
-  const end = endTimestamp.toDate();
+  const end = endTimestamp ? endTimestamp.toDate() : new Date();
   const diffMs = end - start;
   const diffSecs = Math.floor(diffMs / 1000);
   const hours = Math.floor(diffSecs / 3600);
   const minutes = Math.floor((diffSecs % 3600) / 60);
-  
+  const seconds = diffSecs % 60;
+
+  // Format as HH:MM:SS for active sessions
+  if (!endTimestamp) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  // Format as "Xh Ym" for completed sessions
   return `${hours}h ${minutes}m`;
 }
 
