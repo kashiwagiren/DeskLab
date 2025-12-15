@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeskLab Debug Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        h1 {
+            color: #2d3748;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #48bb78;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border-left: 4px solid #f56565;
+            color: #991b1b;
+        }
+        .info {
+            background: #e0e7ff;
+            border-left: 4px solid #667eea;
+            color: #3730a3;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 2px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 DeskLab Debug Panel</h1>
+    <p>Use this page to test all API endpoints and find errors.</p>
+
+    <!-- Test 1: API Reachability -->
+    <div class="test-section">
+        <h2>1. Test API Connection</h2>
+        <button onclick="testAPI()">Test API</button>
+        <div id="apiResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 2: Database Connection -->
+    <div class="test-section">
+        <h2>2. Test Database Connection</h2>
+        <button onclick="window.open('test_connection.php', '_blank')">Open Database Test</button>
+        <p style="color: #718096;">This will open in a new tab and show detailed database status.</p>
+    </div>
+
+    <!-- Test 3: Add Class -->
+    <div class="test-section">
+        <h2>3. Test Add Class</h2>
+        <div class="form-group">
+            <label>EDP Code:</label>
+            <input type="text" id="testEdp" value="12345" maxlength="5">
+        </div>
+        <div class="form-group">
+            <label>Course:</label>
+            <input type="text" id="testCourse" value="Test Course">
+        </div>
+        <div class="form-group">
+            <label>Instructor:</label>
+            <input type="text" id="testInstructor" value="Test Teacher">
+        </div>
+        <div class="form-group">
+            <label>Room:</label>
+            <input type="text" id="testRoom" value="TEST">
+        </div>
+        <div class="form-group">
+            <label>Start Time:</label>
+            <input type="time" id="testStart" value="09:00">
+        </div>
+        <div class="form-group">
+            <label>End Time:</label>
+            <input type="time" id="testEnd" value="10:00">
+        </div>
+        <div class="form-group">
+            <label>Days:</label>
+            <input type="text" id="testDays" value="MON, WED, FRI">
+        </div>
+        <button onclick="testAddClass()">Test Add Class</button>
+        <div id="classResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 4: Login -->
+    <div class="test-section">
+        <h2>4. Test Student Login</h2>
+        <div class="form-group">
+            <label>Student Name:</label>
+            <input type="text" id="testName" value="Test Student">
+        </div>
+        <div class="form-group">
+            <label>Student ID:</label>
+            <input type="text" id="testId" value="12345678" maxlength="8">
+        </div>
+        <div class="form-group">
+            <label>Year & Section:</label>
+            <input type="text" id="testYear" value="BSCPE - 4">
+        </div>
+        <div class="form-group">
+            <label>Room:</label>
+            <input type="text" id="testLoginRoom" value="TEST">
+        </div>
+        <div class="form-group">
+            <label>Purpose:</label>
+            <input type="text" id="testPurpose" value="Testing">
+        </div>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 5: Get Rooms -->
+    <div class="test-section">
+        <h2>5. Test Get Rooms</h2>
+        <button onclick="testGetRooms()">Test Get Rooms</button>
+        <div id="roomsResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Console Log -->
+    <div class="test-section">
+        <h2>📋 Console Log</h2>
+        <p>Open browser console (F12) to see detailed errors.</p>
+        <button onclick="console.clear()">Clear Console</button>
+    </div>
+
+    <script>
+        // Test API Connection
+        async function testAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing API...';
+
+            try {
+                const response = await fetch('api/test.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ API Working!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ API Error:\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ Connection Failed:\n\n' + error.message + '\n\nMake sure:\n1. Apache is running\n2. You are accessing via http://localhost/\n3. Files are in htdocs/desklab/';
+                console.error('API Test Error:', error);
+            }
+        }
+
+        // Test Add Class
+        async function testAddClass() {
+            const resultDiv = document.getElementById('classResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing Add Class...';
+
+            const data = {
+                edp_code: document.getElementById('testEdp').value,
+                course_subject: document.getElementById('testCourse').value,
+                instructor: document.getElementById('testInstructor').value,
+                room_number: document.getElementById('testRoom').value,
+                start_time: document.getElementById('testStart').value,
+                end_time: document.getElementById('testEnd').value,
+                days: document.getElementById('testDays').value
+            };
+
+            console.log('Sending:', data);
+
+            try {
+                const response = await fetch('api/admin/add_class.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log('Response:', result);
+
+                if (result.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ Class Added Successfully!\n\n' + JSON.stringify(result, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ Error Adding Class:\n\n' + JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ Request Failed:\n\n' + error.message;
+                console.error('Add Class Error:', error);
+            }
+        }
+
+        // Test Login
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing Login...';
+
+            const data = {
+                student_name: document.getElementById('testName').value,
+                student_id: document.getElementById('testId').value,
+                year_section: document.getElementById('testYear').value,
+                room_number: document.getElementById('testLoginRoom').value,
+                purpose: document.getElementById('testPurpose').value
+            };
+
+            console.log('Sending:', data);
+
+            try {
+                const response = await fetch('api/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log('Response:', result);
+
+                if (result.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ Login Successful!\n\n' + JSON.stringify(result, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ Login Error:\n\n' + JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ Request Failed:\n\n' + error.message;
+                console.error('Login Error:', error);
+            }
+        }
+
+        // Test Get Rooms
+        async function testGetRooms() {
+            const resultDiv = document.getElementById('roomsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing Get Rooms...';
+
+            try {
+                const response = await fetch('api/get_rooms.php');
+                const result = await response.json();
+                console.log('Response:', result);
+
+                if (result.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ Rooms Retrieved!\n\n' + JSON.stringify(result, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ Error Getting Rooms:\n\n' + JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ Request Failed:\n\n' + error.message;
+                console.error('Get Rooms Error:', error);
+            }
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', function() {
+            console.log('%c🔧 DeskLab Debug Panel Loaded', 'color: #667eea; font-size: 20px; font-weight: bold;');
+            console.log('Run testAPI() to start testing');
+        });
+    </script>
+</body>
+</html>

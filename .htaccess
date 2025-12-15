@@ -1,0 +1,50 @@
+# DeskLab .htaccess Configuration
+
+# Enable rewrite engine
+RewriteEngine On
+
+# Prevent directory browsing
+Options -Indexes
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Enable CORS for local development
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type"
+
+# Custom error pages (optional - create these files if needed)
+# ErrorDocument 404 /desklab/404.html
+# ErrorDocument 500 /desklab/500.html
+
+# PHP settings
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+
+# Protect sensitive files
+<FilesMatch "\.(sql|md|json|log)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to specific files
+<FilesMatch "^(README\.md|QUICK_START\.md)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Cache static resources
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# Compress text files
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript
+</IfModule>

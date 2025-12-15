@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to DeskLab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .logo {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            color: #718096;
+            font-size: 1.1em;
+            margin-bottom: 40px;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 18px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-info {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #3182ce;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(66, 153, 225, 0.4);
+        }
+
+        .section {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 30px;
+            margin-top: 20px;
+        }
+
+        .section h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .links a:hover {
+            background: #f7fafc;
+        }
+
+        .version {
+            color: #a0aec0;
+            font-size: 0.9em;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .logo {
+                font-size: 3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">💻</div>
+        <h1>Welcome to DeskLab</h1>
+        <p class="tagline">Computer Laboratory Management System</p>
+
+        <div class="buttons">
+            <a href="index.html" class="btn btn-primary">🎓 Student Interface</a>
+            <a href="admin.html" class="btn btn-success">👨‍💼 Admin Dashboard</a>
+            <a href="check_setup.php" class="btn btn-info">🔧 Verify Setup</a>
+        </div>
+
+        <div class="section">
+            <h3>📚 Documentation</h3>
+            <div class="links">
+                <a href="QUICK_START.md" target="_blank">→ Quick Start Guide (5 minutes)</a>
+                <a href="README.md" target="_blank">→ Complete Documentation</a>
+                <a href="PROJECT_SUMMARY.md" target="_blank">→ Project Summary</a>
+                <a href="CHANGELOG.md" target="_blank">→ Version History</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>ℹ️ About</h3>
+            <p style="color: #4a5568; line-height: 1.6;">
+                DeskLab is a comprehensive computer lab management system designed for educational institutions.
+                Students can login to use computers, view schedules, and track their sessions.
+                Administrators can manage requests, monitor usage, and maintain class schedules.
+            </p>
+        </div>
+
+        <div class="section">
+            <h3>🚀 Getting Started</h3>
+            <ol style="text-align: left; color: #4a5568; line-height: 1.8; padding-left: 40px;">
+                <li>Click "Verify Setup" to check your installation</li>
+                <li>Go to Admin Dashboard to add classes</li>
+                <li>Register students and enroll them</li>
+                <li>Test the Student Interface</li>
+            </ol>
+        </div>
+
+        <div class="version">
+            DeskLab v1.0.0 | Production Ready
+        </div>
+    </div>
+</body>
+</html>

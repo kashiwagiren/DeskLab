@@ -1,0 +1,50 @@
+# Database Configuration (contains passwords)
+config/database.php
+
+# Database Backups
+database/*.sql
+!database/schema.sql
+
+# Logs
+*.log
+error.log
+
+# Temporary Files
+*.tmp
+*.temp
+*.cache
+
+# IDE Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Uploads (if any user uploads)
+uploads/
+temp/
+
+# Environment Files
+.env
+.env.local
+.env.production
+
+# Composer (if used)
+/vendor/
+composer.lock
+
+# Node modules (if used)
+node_modules/
+package-lock.json
+
+# Test Files (optional - uncomment if you don't want to share)
+# test_connection.php
+# test_class_detection.php
+# create_test_class_now.php
+# debug.html
+# console.html

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeskLab - Student Login</title>
+    <link rel="stylesheet" href="public/css/student.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DeskLab</h1>
+            <p class="subtitle">Computer Laboratory Management System</p>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="menu-section">
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="showSchedule()">View Schedule</button>
+                <button class="btn btn-success" onclick="showLogin()">Login</button>
+            </div>
+        </div>
+
+        <!-- Schedule View Section -->
+        <div id="scheduleSection" class="section hidden">
+            <div class="section-header">
+                <h2>Room Schedule</h2>
+                <button class="btn btn-secondary" onclick="showMainMenu()">Back</button>
+            </div>
+
+            <div class="room-selector">
+                <label for="roomSelect">Select Room:</label>
+                <select id="roomSelect" onchange="loadSchedule()">
+                    <option value="">-- Choose a room --</option>
+                </select>
+            </div>
+
+            <div id="scheduleDisplay" class="schedule-table"></div>
+        </div>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="section hidden">
+            <div class="section-header">
+                <h2>Student Login</h2>
+                <button class="btn btn-secondary" onclick="showMainMenu()">Back</button>
+            </div>
+
+            <div class="login-options">
+                <button class="btn btn-option" onclick="showUploadForm()">Upload Study Load</button>
+                <button class="btn btn-option" onclick="showManualForm()">Manual Entry</button>
+            </div>
+
+            <!-- Upload Study Load Form -->
+            <div id="uploadForm" class="form-container hidden">
+                <h3>Upload Study Load</h3>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="studyLoadFile" accept="image/*,.pdf" onchange="handleFileUpload(event)">
+                    <label for="studyLoadFile" class="upload-label">
+                        <div class="upload-icon">📄</div>
+                        <p>Click to upload or drag and drop</p>
+                        <p class="upload-hint">PDF or Image (PNG, JPG)</p>
+                    </label>
+                </div>
+                <div id="uploadPreview" class="hidden"></div>
+                <button class="btn btn-secondary" onclick="showManualForm()">Switch to Manual Entry</button>
+            </div>
+
+            <!-- Manual Entry Form -->
+            <div id="manualForm" class="form-container hidden">
+                <h3>Manual Entry</h3>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="studentName">Student Name:</label>
+                        <input type="text" id="studentName" required placeholder="Juan Dela Cruz">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="studentId">Student ID (8 digits):</label>
+                        <input type="text" id="studentId" maxlength="8" pattern="[0-9]{8}" required placeholder="12345678">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="yearSection">Year & Section:</label>
+                        <input type="text" id="yearSection" required placeholder="BSCPE - 4">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="roomNumber">Room Number:</label>
+                        <select id="roomNumber" required>
+                            <option value="">-- Select Room --</option>
+                        </select>
+                    </div>
+
+                    <div id="purposeSection" class="form-group hidden">
+                        <label for="purpose">Purpose for using this computer:</label>
+                        <textarea id="purpose" rows="3" placeholder="State your purpose..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Login</button>
+                    <button type="button" class="btn btn-secondary" onclick="showUploadForm()">Switch to Upload</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="overlay hidden">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+
+        <!-- Notification Popup -->
+        <div id="notificationPopup" class="popup hidden">
+            <div class="popup-content">
+                <h3 id="popupTitle"></h3>
+                <p id="popupMessage"></p>
+                <button class="btn btn-primary" onclick="closePopup()">OK</button>
+            </div>
+        </div>
+
+        <!-- Class Warning Notification -->
+        <div id="classWarning" class="warning-popup hidden">
+            <div class="warning-content">
+                <h3>⚠️ Class Starting Soon</h3>
+                <p id="warningMessage"></p>
+                <button class="btn btn-warning" onclick="acknowledgeWarning()">I Understand</button>
+            </div>
+        </div>
+
+        <!-- Pending Approval Popup -->
+        <div id="pendingPopup" class="popup hidden">
+            <div class="popup-content">
+                <h3>⏳ Request Pending</h3>
+                <p>Your request has been sent to the administrator. Please wait for approval.</p>
+                <div class="spinner-small"></div>
+                <p class="status-text" id="statusText">Waiting for admin response...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="public/js/student.js"></script>
+</body>
+</html>
