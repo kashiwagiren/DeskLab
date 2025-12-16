@@ -369,12 +369,19 @@ async function addClass(event) {
 
 async function loadClassesList() {
   try {
+    console.log('Loading classes list...');
     const snapshot = await classesCollection.get();
+    console.log('Classes snapshot size:', snapshot.size);
+
     const container = document.getElementById('classesList');
 
-    if (!container) return;
+    if (!container) {
+      console.warn('Classes list container not found');
+      return;
+    }
 
     if (snapshot.empty) {
+      console.log('No classes found in Firestore');
       container.innerHTML = '<p class="no-data">No classes found. Click "Add Class" to create one.</p>';
       return;
     }
