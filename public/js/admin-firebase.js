@@ -16,12 +16,13 @@ function setupRealtimeListeners() {
   // Listen for pending requests
   pendingRequestsListener = pendingRequestsCollection
     .where('adminDecision', '==', 'Pending')
-    .orderBy('requestTime', 'desc')
     .onSnapshot(snapshot => {
+      console.log('Pending requests snapshot received, size:', snapshot.size);
       const requests = [];
       snapshot.forEach(doc => {
         requests.push({ id: doc.id, ...doc.data() });
       });
+      console.log('Pending requests:', requests);
       displayPendingRequests(requests);
     }, error => {
       console.error('Error listening to pending requests:', error);
@@ -30,12 +31,13 @@ function setupRealtimeListeners() {
   // Listen for active users
   activeUsersListener = loginsCollection
     .where('isActive', '==', true)
-    .orderBy('timeIn', 'desc')
     .onSnapshot(snapshot => {
+      console.log('Active users snapshot received, size:', snapshot.size);
       const users = [];
       snapshot.forEach(doc => {
         users.push({ id: doc.id, ...doc.data() });
       });
+      console.log('Active users:', users);
       displayActiveUsers(users);
     }, error => {
       console.error('Error listening to active users:', error);
