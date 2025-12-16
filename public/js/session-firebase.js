@@ -6,6 +6,7 @@ console.log('Loading session-firebase.js...');
 let loginId = null;
 let sessionListener = null;
 let sessionData = null;
+let classCheckInterval = null;
 
 // ===========================
 // Get Login ID from URL
@@ -59,6 +60,9 @@ async function loadSession() {
 
     // Start session timer
     startSessionTimer();
+
+    // Start class check (every 30 seconds)
+    startClassCheck();
 
   } catch (error) {
     console.error('Error loading session:', error);
@@ -148,11 +152,171 @@ function startSessionTimer() {
 function updateSessionDuration() {
   if (!sessionData || !sessionData.timeIn) return;
 
-  const durationEl = document.getElementById('sessionDuration');
-  if (!durationEl) return;
-
   const duration = calculateDuration(sessionData.timeIn, null);
-  durationEl.textContent = duration;
+
+  // Update both timer elements
+  const durationEl = document.getElementById('sessionDuration');
+  if (durationEl) durationEl.textContent = duration;
+
+  const sessionTimeEl = document.getElementById('sessionTime');
+  if (sessionTimeEl) sessionTimeEl.textContent = duration;
+}
+
+// ===========================
+// Auto-Logout on Class Start
+// ===========================
+
+function startClassCheck() {
+  // Check immediately
+  checkForClassStart();
+  
+  // Then check every 30 seconds
+  classCheckInterval = setInterval(checkForClassStart, 30000);
+}
+
+async function checkForClassStart() {
+  if (!sessionData || !sessionData.roomNumber || !sessionData.isActive) return;
+  
+  // If student is enrolled in a class (status shows enrolled), don't auto-logout
+  if (sessionData.status === 'Enrolled (Allowed)') return;
+  
+  try {
+    const currentDay = getCurrentDay();
+    const currentTime = getCurrentTimeString();
+    
+    // Check if any class is currently in session in this room
+    const snapshot = await classesCollection
+      .where('roomNumber', '==', sessionData.roomNumber)
+      .get();
+    
+    let classInSession = null;
+    
+    snapshot.forEach(doc => {
+      const cls = doc.data();
+      if (isDayMatch(cls.days, currentDay) && isTimeBetween(cls.startTime, cls.endTime)) {
+        classInSession = { id: doc.id, ...cls };
+      }
+    });
+    
+    if (classInSession) {
+      // Check if student is enrolled in this class
+      const enrollmentSnapshot = await enrollmentsCollection
+        .where('studentId', '==', sessionData.studentId)
+        .where('classId', '==', classInSession.id)
+        .get();
+      
+      if (enrollmentSnapshot.empty) {
+        // Student not enrolled - force logout
+        await performAutoLogout(classInSession);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for class start:', error);
+  }
+}
+
+async function performAutoLogout(classInfo) {
+  // Stop the class check interval
+  if (classCheckInterval) {
+    clearInterval(classCheckInterval);
+  }
+  
+  // Stop the session listener
+  if (sessionListener) {
+    sessionListener();
+  }
+  
+  // Mark session as inactive
+  if (sessionData) {
+    sessionData.isActive = false;
+  }
+  
+  try {
+    await loginsCollection.doc(loginId).update({
+      timeOut: getCurrentTimestamp(),
+      isActive: false,
+      status: 'Auto Logout - Class Started'
+    });
+  } catch (error) {
+    console.error('Error updating logout status:', error);
+  }
+  
+  // Show class started message
+  showClassStartedLogout(classInfo);
+}
+
+function showClassStartedLogout(classInfo) {
+  const container = document.querySelector('.session-container');
+  if (container) {
+    container.innerHTML = `
+      <div class="logout-message class-started">
+        <div class="logout-icon">📚</div>
+        <h2>Class Has Started</h2>
+        <p>You have been automatically logged out because a scheduled class has started in this room.</p>
+        <div class="class-info-box">
+          <p><strong>Class:</strong> ${classInfo.courseSubject}</p>
+          <p><strong>Instructor:</strong> ${classInfo.instructor}</p>
+          <p><strong>Time:</strong> ${classInfo.startTime} - ${classInfo.endTime}</p>
+        </div>
+        <p class="redirect-message">Redirecting to login page in <span id="countdown">5</span> seconds...</p>
+        <button class="btn btn-primary" onclick="window.location.href='index.html'">
+          Back to Login Now
+        </button>
+      </div>
+    `;
+  }
+  
+  // Auto-redirect countdown
+  let countdown = 5;
+  const countdownEl = document.getElementById('countdown');
+  const timer = setInterval(() => {
+    countdown--;
+    if (countdownEl) {
+      countdownEl.textContent = countdown;
+    }
+    if (countdown <= 0) {
+      clearInterval(timer);
+      window.location.href = 'index.html';
+    }
+  }, 1000);
+}
+
+// ===========================
+// Custom Confirmation Modal
+// ===========================
+
+function showConfirmModal(title, message, icon = '⚠️') {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    const titleEl = document.getElementById('confirmTitle');
+    const messageEl = document.getElementById('confirmMessage');
+    const iconEl = document.getElementById('confirmIcon');
+    const okBtn = document.getElementById('confirmOk');
+    const cancelBtn = document.getElementById('confirmCancel');
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    iconEl.textContent = icon;
+
+    modal.classList.remove('hidden');
+
+    const handleOk = () => {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(true);
+    };
+
+    const handleCancel = () => {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(false);
+    };
+
+    okBtn.addEventListener('click', handleOk);
+    cancelBtn.addEventListener('click', handleCancel);
+  });
 }
 
 // ===========================
@@ -160,9 +324,26 @@ function updateSessionDuration() {
 // ===========================
 
 async function logout() {
-  if (!confirm('Are you sure you want to logout?')) {
-    return;
+  const confirmed = await showConfirmModal(
+    'Logout',
+    'Are you sure you want to logout?',
+    '👋'
+  );
+
+  if (!confirmed) return;
+
+  // Mark session as inactive immediately to prevent beforeunload warning
+  if (sessionData) {
+    sessionData.isActive = false;
   }
+
+  // Stop listener first
+  if (sessionListener) {
+    sessionListener();
+  }
+
+  // Show logging out overlay
+  showLoggingOut();
 
   try {
     await loginsCollection.doc(loginId).update({
@@ -171,17 +352,60 @@ async function logout() {
       status: 'Manual Logout'
     });
 
-    // Stop listener
-    if (sessionListener) {
-      sessionListener();
-    }
-
     showLogoutSuccess();
 
   } catch (error) {
     console.error('Error during logout:', error);
-    alert('Logout failed. Please try again.');
+    hideLoggingOut();
+    showErrorMessage('Logout failed. Please try again.');
   }
+}
+
+function showLoggingOut() {
+  const container = document.querySelector('.session-container');
+  if (container) {
+    const overlay = document.createElement('div');
+    overlay.id = 'loggingOutOverlay';
+    overlay.className = 'logging-out-overlay';
+    overlay.innerHTML = `
+      <div class="logging-out-content">
+        <div class="logging-out-spinner"></div>
+        <p>Logging out...</p>
+      </div>
+    `;
+    container.appendChild(overlay);
+  }
+}
+
+function hideLoggingOut() {
+  const overlay = document.getElementById('loggingOutOverlay');
+  if (overlay) {
+    overlay.remove();
+  }
+}
+
+function showErrorMessage(message) {
+  const modal = document.getElementById('confirmModal');
+  const titleEl = document.getElementById('confirmTitle');
+  const messageEl = document.getElementById('confirmMessage');
+  const iconEl = document.getElementById('confirmIcon');
+  const okBtn = document.getElementById('confirmOk');
+  const cancelBtn = document.getElementById('confirmCancel');
+
+  titleEl.textContent = 'Error';
+  messageEl.textContent = message;
+  iconEl.textContent = '❌';
+  
+  okBtn.textContent = 'OK';
+  cancelBtn.style.display = 'none';
+  
+  modal.classList.remove('hidden');
+
+  okBtn.onclick = () => {
+    modal.classList.add('hidden');
+    cancelBtn.style.display = '';
+    okBtn.textContent = 'Confirm';
+  };
 }
 
 // ===========================
@@ -217,12 +441,27 @@ function showForceLogout() {
         <p>Your session was terminated by an administrator.</p>
         <p><strong>Time Out:</strong> ${sessionData.timeOut ? formatDateTime(sessionData.timeOut) : 'N/A'}</p>
         <p><strong>Duration:</strong> ${calculateDuration(sessionData.timeIn, sessionData.timeOut)}</p>
+        <p class="redirect-message">Redirecting to login page in <span id="countdown">5</span> seconds...</p>
         <button class="btn btn-primary" onclick="window.location.href='index.html'">
-          Back to Login
+          Back to Login Now
         </button>
       </div>
     `;
   }
+
+  // Auto-redirect after 5 seconds with countdown
+  let countdown = 5;
+  const countdownEl = document.getElementById('countdown');
+  const timer = setInterval(() => {
+    countdown--;
+    if (countdownEl) {
+      countdownEl.textContent = countdown;
+    }
+    if (countdown <= 0) {
+      clearInterval(timer);
+      window.location.href = 'index.html';
+    }
+  }, 1000);
 }
 
 function showSessionEnded() {
@@ -258,12 +497,27 @@ function showLogoutSuccess() {
         <p><strong>Time In:</strong> ${sessionData.timeIn ? formatDateTime(sessionData.timeIn) : 'N/A'}</p>
         <p><strong>Time Out:</strong> ${formatDateTime(getCurrentTimestamp())}</p>
         <p><strong>Duration:</strong> ${calculateDuration(sessionData.timeIn, getCurrentTimestamp())}</p>
+        <p class="redirect-message">Redirecting to login page in <span id="countdown">3</span> seconds...</p>
         <button class="btn btn-primary" onclick="window.location.href='index.html'">
-          Back to Login
+          Back to Login Now
         </button>
       </div>
     `;
   }
+
+  // Auto-redirect after 3 seconds with countdown
+  let countdown = 3;
+  const countdownEl = document.getElementById('countdown');
+  const timer = setInterval(() => {
+    countdown--;
+    if (countdownEl) {
+      countdownEl.textContent = countdown;
+    }
+    if (countdown <= 0) {
+      clearInterval(timer);
+      window.location.href = 'index.html';
+    }
+  }, 1000);
 }
 
 // ===========================

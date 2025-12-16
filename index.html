@@ -9,130 +9,115 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DeskLab - Student Login</title>
+    <title>DeskLab - Student Portal</title>
     <link rel="stylesheet" href="public/css/student.css" />
   </head>
   <body>
     <div class="container">
+      <!-- Admin Link -->
+      <button class="admin-link" onclick="showAdminLogin()" title="Admin Dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Admin
+      </button>
+
       <div class="header">
         <h1>DeskLab</h1>
         <p class="subtitle">Computer Laboratory Management System</p>
       </div>
 
-      <!-- Main Menu -->
-      <div id="mainMenu" class="menu-section">
-        <div class="button-group">
-          <button class="btn btn-primary" onclick="showSchedule()">
-            View Schedule
-          </button>
-          <button class="btn btn-success" onclick="showLogin()">Login</button>
-        </div>
-      </div>
+      <!-- Main Content - Single Page -->
+      <div class="main-content">
 
-      <!-- Schedule View Section -->
-      <div id="scheduleSection" class="section hidden">
-        <div class="section-header">
-          <h2>Room Schedule</h2>
-          <button class="btn btn-secondary" onclick="showMainMenu()">
-            Back
-          </button>
-        </div>
-
-        <div class="room-selector">
-          <label for="roomSelect">Select Room:</label>
-          <select id="roomSelect" onchange="loadSchedule()">
-            <option value="">-- Choose a room --</option>
-          </select>
-        </div>
-
-        <div id="scheduleDisplay" class="schedule-table"></div>
-      </div>
-
-      <!-- Login Section -->
-      <div id="loginSection" class="section hidden">
-        <div class="section-header">
-          <h2>Student Login</h2>
-          <button class="btn btn-secondary" onclick="showMainMenu()">
-            Back
-          </button>
-        </div>
-
-        <div class="login-options">
-          <button class="btn btn-option" onclick="showUploadForm()">
-            Upload Study Load
-          </button>
-          <button class="btn btn-option" onclick="showManualForm()">
-            Manual Entry
-          </button>
-        </div>
-
-        <!-- Upload Study Load Form -->
-        <div id="uploadForm" class="form-container hidden">
-          <h3>Upload Study Load</h3>
-          <div class="upload-area" id="uploadArea">
-            <input
-              type="file"
-              id="studyLoadFile"
-              accept="image/*,.pdf"
-              onchange="handleFileUpload(event)"
-            />
-            <label for="studyLoadFile" class="upload-label">
-              <div class="upload-icon">📄</div>
-              <p>Click to upload or drag and drop</p>
-              <p class="upload-hint">PDF or Image (PNG, JPG)</p>
-            </label>
+        <!-- Left Panel - Quick Actions + Schedule -->
+        <div class="content-row">
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <button class="action-card" onclick="toggleSchedule()">
+              <div class="action-icon">📅</div>
+              <div class="action-card-content">
+                <h3>View Schedule</h3>
+                <p>Check room availability</p>
+              </div>
+            </button>
           </div>
-          <div id="uploadPreview" class="hidden"></div>
-          <button class="btn btn-secondary" onclick="showManualForm()">
-            Switch to Manual Entry
-          </button>
+
+          <!-- Schedule Viewer (in left panel) -->
+          <div id="scheduleSection" class="schedule-panel">
+            <div class="schedule-header">
+              <h2>Room Schedule</h2>
+              <p>View class schedules by room</p>
+            </div>
+
+            <div class="schedule-container">
+              <div class="room-selector">
+                <label for="roomSelect">Select Room:</label>
+                <select id="roomSelect" onchange="loadSchedule()">
+                  <option value="">-- Choose a room --</option>
+                </select>
+              </div>
+              <div id="scheduleDisplay" class="schedule-table"></div>
+            </div>
+          </div>
         </div>
 
-        <!-- Manual Entry Form -->
-        <div id="manualForm" class="form-container hidden">
-          <h3>Manual Entry</h3>
+        <!-- Right Panel - Login Section -->
+        <div id="loginSection" class="login-container visible">
+
+          <div class="login-header">
+            <h2>Student Login</h2>
+            <p>Enter your information to start your session</p>
+          </div>
+
+          <!-- Manual Entry Form -->
           <form id="loginForm">
-            <div class="form-group">
-              <label for="studentName">Student Name:</label>
-              <input
-                type="text"
-                id="studentName"
-                required
-                placeholder="Juan Dela Cruz"
-              />
+            <div class="form-row">
+              <div class="form-group">
+                <label for="studentName">Student Name</label>
+                <input
+                  type="text"
+                  id="studentName"
+                  required
+                  placeholder="Juan Dela Cruz"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="studentId">Student ID</label>
+                <input
+                  type="text"
+                  id="studentId"
+                  maxlength="8"
+                  pattern="[0-9]{8}"
+                  required
+                  placeholder="12345678"
+                />
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="studentId">Student ID (8 digits):</label>
-              <input
-                type="text"
-                id="studentId"
-                maxlength="8"
-                pattern="[0-9]{8}"
-                required
-                placeholder="12345678"
-              />
-            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="yearSection">Year & Section</label>
+                <input
+                  type="text"
+                  id="yearSection"
+                  required
+                  placeholder="BSCPE - 4"
+                />
+              </div>
 
-            <div class="form-group">
-              <label for="yearSection">Year & Section:</label>
-              <input
-                type="text"
-                id="yearSection"
-                required
-                placeholder="BSCPE - 4"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="roomNumber">Room Number:</label>
-              <select id="roomNumber" required>
-                <option value="">-- Select Room --</option>
-              </select>
+              <div class="form-group">
+                <label for="roomNumber">Room Number</label>
+                <select id="roomNumber" required onchange="handleRoomSelection()">
+                  <option value="">-- Select Room --</option>
+                </select>
+              </div>
             </div>
 
             <div id="purposeSection" class="form-group hidden">
-              <label for="purpose">Purpose for using this computer:</label>
+              <label for="purpose">Purpose for using this computer</label>
               <textarea
                 id="purpose"
                 rows="3"
@@ -140,15 +125,11 @@
               ></textarea>
             </div>
 
-            <button type="submit" class="btn btn-success">Login</button>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              onclick="showUploadForm()"
-            >
-              Switch to Upload
+            <button type="submit" class="btn btn-login">
+              <span>🚀</span> Login Now
             </button>
           </form>
+
         </div>
       </div>
 
@@ -190,6 +171,45 @@
           <p class="status-text" id="statusText">
             Waiting for admin response...
           </p>
+        </div>
+      </div>
+
+      <!-- Admin Login Popup -->
+      <div id="adminLoginPopup" class="popup hidden">
+        <div class="popup-content admin-login-content">
+          <h3>🔐 Admin Login</h3>
+          <p>Enter admin credentials to access the dashboard</p>
+          <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+              <label for="adminUsername">Username</label>
+              <input
+                type="text"
+                id="adminUsername"
+                required
+                placeholder="Enter admin username"
+                autocomplete="username"
+              />
+            </div>
+            <div class="form-group">
+              <label for="adminPassword">Password</label>
+              <input
+                type="password"
+                id="adminPassword"
+                required
+                placeholder="Enter admin password"
+                autocomplete="current-password"
+              />
+            </div>
+            <div class="admin-login-buttons">
+              <button type="submit" class="btn btn-primary">
+                Login
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="closeAdminLogin()">
+                Cancel
+              </button>
+            </div>
+          </form>
+          <p id="adminLoginError" class="error-message hidden"></p>
         </div>
       </div>
     </div>

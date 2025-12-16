@@ -9,6 +9,8 @@ console.log('Loading admin-firebase.js...');
 
 let pendingRequestsListener = null;
 let activeUsersListener = null;
+let activeUsersData = [];
+let durationUpdateInterval = null;
 
 function setupRealtimeListeners() {
   console.log('Setting up real-time listeners...');
@@ -33,12 +35,17 @@ function setupRealtimeListeners() {
     .where('isActive', '==', true)
     .onSnapshot(snapshot => {
       console.log('Active users snapshot received, size:', snapshot.size);
-      const users = [];
+      activeUsersData = [];
       snapshot.forEach(doc => {
-        users.push({ id: doc.id, ...doc.data() });
+        activeUsersData.push({ id: doc.id, ...doc.data() });
       });
-      console.log('Active users:', users);
-      displayActiveUsers(users);
+      console.log('Active users:', activeUsersData);
+      displayActiveUsers(activeUsersData);
+      
+      // Start duration update interval if not already running
+      if (!durationUpdateInterval) {
+        durationUpdateInterval = setInterval(updateActiveUserDurations, 1000);
+      }
     }, error => {
       console.error('Error listening to active users:', error);
     });
@@ -161,7 +168,13 @@ function displayPendingRequests(requests) {
   }
 
   if (requests.length === 0) {
-    container.innerHTML = '<p class="no-data">No pending requests</p>';
+    container.innerHTML = `
+      <div class="no-data">
+        <div style="font-size: 4em; margin-bottom: 15px; opacity: 0.3; animation: float 3s ease-in-out infinite;">⏳</div>
+        <p style="margin: 0; font-weight: 600; color: #4a5568; font-size: 1.2em;">No pending requests</p>
+        <p style="margin: 10px 0 0 0; font-size: 0.95em; color: #a0aec0;">All student requests have been processed</p>
+      </div>
+    `;
     return;
   }
 
@@ -201,7 +214,13 @@ function displayActiveUsers(users) {
   }
 
   if (users.length === 0) {
-    container.innerHTML = '<p class="no-data">No active users</p>';
+    container.innerHTML = `
+      <div class="no-data">
+        <div style="font-size: 4em; margin-bottom: 15px; opacity: 0.3; animation: float 3s ease-in-out infinite;">👥</div>
+        <p style="margin: 0; font-weight: 600; color: #4a5568; font-size: 1.2em;">No active users</p>
+        <p style="margin: 10px 0 0 0; font-size: 0.95em; color: #a0aec0;">No students are currently logged in</p>
+      </div>
+    `;
     return;
   }
 
@@ -221,7 +240,7 @@ function displayActiveUsers(users) {
         <td>${user.roomNumber || 'N/A'}</td>
         <td>${user.status || 'N/A'}</td>
         <td>${timeIn}</td>
-        <td>${duration}</td>
+        <td class="duration-cell" data-login-id="${user.id}">${duration}</td>
         <td>
           <button class="btn btn-warning btn-sm" onclick="forceLogout('${user.id}')">Force Logout</button>
         </td>
@@ -231,6 +250,17 @@ function displayActiveUsers(users) {
 
   html += '</tbody></table>';
   container.innerHTML = html;
+}
+
+function updateActiveUserDurations() {
+  activeUsersData.forEach(user => {
+    if (user.timeIn) {
+      const cell = document.querySelector(`.duration-cell[data-login-id="${user.id}"]`);
+      if (cell) {
+        cell.textContent = calculateDuration(user.timeIn, null);
+      }
+    }
+  });
 }
 
 // ===========================
@@ -247,23 +277,7 @@ async function approveRequest(requestId) {
       return;
     }
 
-    const requestData = requestDoc.data();
-
-    // Create login entry
-    await loginsCollection.add({
-      studentId: requestData.studentId,
-      studentName: requestData.studentName,
-      yearSection: requestData.yearSection,
-      roomNumber: requestData.roomNumber,
-      classId: requestData.classId || null,
-      purpose: requestData.purpose || 'Not specified',
-      status: 'Admin Approved',
-      timeIn: getCurrentTimestamp(),
-      timeOut: null,
-      isActive: true
-    });
-
-    // Update request status
+    // Update request status only - student page will create login entry
     await pendingRequestsCollection.doc(requestId).update({
       adminDecision: 'Accepted',
       decidedAt: getCurrentTimestamp()
@@ -292,13 +306,55 @@ async function rejectRequest(requestId) {
 }
 
 // ===========================
+// Custom Confirmation Modal
+// ===========================
+
+function showConfirmModal(title, message, icon = '⚠️') {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    const titleEl = document.getElementById('confirmTitle');
+    const messageEl = document.getElementById('confirmMessage');
+    const iconEl = document.getElementById('confirmIcon');
+    const okBtn = document.getElementById('confirmOk');
+    const cancelBtn = document.getElementById('confirmCancel');
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    iconEl.textContent = icon;
+
+    modal.classList.remove('hidden');
+
+    const handleOk = () => {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(true);
+    };
+
+    const handleCancel = () => {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(false);
+    };
+
+    okBtn.addEventListener('click', handleOk);
+    cancelBtn.addEventListener('click', handleCancel);
+  });
+}
+
+// ===========================
 // Force Logout
 // ===========================
 
 async function forceLogout(loginId) {
-  if (!confirm('Are you sure you want to force logout this user?')) {
-    return;
-  }
+  const confirmed = await showConfirmModal(
+    'Force Logout',
+    'Are you sure you want to force logout this user?',
+    '🚪'
+  );
+
+  if (!confirmed) return;
 
   try {
     await loginsCollection.doc(loginId).update({
@@ -418,9 +474,13 @@ async function loadClassesList() {
 }
 
 async function deleteClass(classId) {
-  if (!confirm('Are you sure you want to delete this class?')) {
-    return;
-  }
+  const confirmed = await showConfirmModal(
+    'Delete Class',
+    'Are you sure you want to delete this class? This action cannot be undone.',
+    '🗑️'
+  );
+
+  if (!confirmed) return;
 
   try {
     await classesCollection.doc(classId).delete();
@@ -609,7 +669,22 @@ function timeStringToMinutes(timeString) {
 }
 
 function showNotification(title, message) {
-  alert(`${title}: ${message}`);
+  const toast = document.getElementById('toast');
+  if (toast) {
+    const isSuccess = title.toLowerCase() === 'success';
+    toast.className = `toast ${isSuccess ? 'toast-success' : 'toast-error'} show`;
+    toast.innerHTML = `
+      <div class="toast-icon">${isSuccess ? '✓' : '✕'}</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  }
 }
 
 // ===========================
@@ -735,6 +810,9 @@ window.addEventListener('beforeunload', () => {
   }
   if (activeUsersListener) {
     activeUsersListener();
+  }
+  if (durationUpdateInterval) {
+    clearInterval(durationUpdateInterval);
   }
 });
 

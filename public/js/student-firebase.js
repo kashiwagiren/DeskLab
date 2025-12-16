@@ -4,34 +4,98 @@
 console.log('Loading student-firebase.js...');
 
 // ===========================
-// UI State Management
+// Admin Login Functions
 // ===========================
 
+// Default admin credentials (stored in code for simplicity)
+// In production, this should be stored securely in Firebase Authentication
+const ADMIN_CREDENTIALS = {
+  username: 'admin',
+  password: 'admin123'
+};
+
+function showAdminLogin() {
+  const popup = document.getElementById('adminLoginPopup');
+  if (popup) {
+    popup.classList.remove('hidden');
+    // Clear previous inputs and errors
+    document.getElementById('adminUsername').value = '';
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminLoginError').classList.add('hidden');
+    document.getElementById('adminUsername').focus();
+  }
+}
+
+function closeAdminLogin() {
+  const popup = document.getElementById('adminLoginPopup');
+  if (popup) {
+    popup.classList.add('hidden');
+  }
+}
+
+function handleAdminLogin(event) {
+  event.preventDefault();
+
+  const username = document.getElementById('adminUsername').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const errorEl = document.getElementById('adminLoginError');
+
+  // Validate credentials
+  if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+    // Success - redirect to admin page
+    window.location.href = 'admin.html';
+  } else {
+    // Show error
+    errorEl.textContent = '❌ Invalid username or password';
+    errorEl.classList.remove('hidden');
+
+    // Shake animation
+    const form = document.getElementById('adminLoginForm');
+    form.style.animation = 'shake 0.5s';
+    setTimeout(() => {
+      form.style.animation = '';
+    }, 500);
+  }
+}
+
+// ===========================
+// UI State Management - New Single Page Design
+// ===========================
+
+let roomsLoaded = false;
+
+// Toggle schedule section
+function toggleSchedule() {
+  const scheduleSection = document.getElementById('scheduleSection');
+  const isOpen = scheduleSection.classList.contains('open');
+
+  if (isOpen) {
+    scheduleSection.classList.remove('open');
+  } else {
+    scheduleSection.classList.add('open');
+    // Only load rooms list if not already loaded
+    if (!roomsLoaded) {
+      loadRoomsList();
+      roomsLoaded = true;
+    }
+  }
+}
+
+// Legacy functions for compatibility
 function showMainMenu() {
-  document.getElementById('mainMenu').classList.remove('hidden');
-  document.getElementById('scheduleSection').classList.add('hidden');
-  document.getElementById('loginSection').classList.add('hidden');
+  // Not needed in new design, but keeping for compatibility
 }
 
 function showSchedule() {
-  document.getElementById('mainMenu').classList.add('hidden');
-  document.getElementById('scheduleSection').classList.remove('hidden');
-  loadRoomsList();
+  toggleSchedule();
 }
 
 function showLogin() {
-  document.getElementById('mainMenu').classList.add('hidden');
-  document.getElementById('loginSection').classList.remove('hidden');
+  // Login is always visible now
 }
 
-function showUploadForm() {
-  document.getElementById('uploadForm').classList.remove('hidden');
-  document.getElementById('manualForm').classList.add('hidden');
-}
-
-function showManualForm() {
-  document.getElementById('uploadForm').classList.add('hidden');
-  document.getElementById('manualForm').classList.remove('hidden');
+function showLoginSection() {
+  // Login is always visible now, no need to toggle
 }
 
 // ===========================
@@ -167,8 +231,8 @@ function handleRoomSelection() {
     return;
   }
 
-  // Check if there's a class in this room right now
-  checkCurrentClass(roomNumber);
+  // Show purpose field when a room is selected
+  purposeSection.classList.remove('hidden');
 }
 
 async function checkCurrentClass(roomNumber) {
@@ -209,23 +273,98 @@ async function checkCurrentClass(roomNumber) {
 
 function handleFileUpload(event) {
   const file = event.target.files[0];
-  const uploadPreview = document.getElementById('uploadPreview');
-
   if (!file) return;
 
-  // Show preview
+  // Validate file size (5MB max)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    showNotification('Error', 'File is too large! Maximum size is 5MB.');
+    return;
+  }
+
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  if (!validTypes.includes(file.type)) {
+    showNotification('Error', 'Invalid file type! Please upload a PDF, PNG, or JPG file.');
+    return;
+  }
+
+  const uploadPreview = document.getElementById('uploadPreview');
   uploadPreview.classList.remove('hidden');
-  uploadPreview.innerHTML = `
-    <div class="file-preview">
-      <p><strong>Selected file:</strong> ${file.name}</p>
+
+  // Check if it's an image
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      uploadPreview.innerHTML = `
+        <h4>📄 File Preview</h4>
+        <p><strong>File:</strong> ${file.name}</p>
+        <p><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB</p>
+        <img src="${e.target.result}" alt="Preview" style="max-width: 100%; border-radius: 8px; margin: 15px 0;">
+        <div class="upload-info" style="margin-top: 15px;">
+          <p><strong>⚠️ Note:</strong> OCR processing is not available on GitHub Pages.</p>
+          <p>Please switch to Manual Entry to login.</p>
+        </div>
+        <button class="btn btn-primary" onclick="switchTab('manual')" style="margin-top: 15px;">
+          Switch to Manual Entry
+        </button>
+      `;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // PDF file
+    uploadPreview.innerHTML = `
+      <h4>📄 File Uploaded</h4>
+      <p><strong>File:</strong> ${file.name}</p>
       <p><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB</p>
-      <p class="warning">⚠️ Note: OCR processing is not available on GitHub Pages.</p>
-      <p>Please use Manual Entry instead.</p>
-      <button class="btn btn-secondary" onclick="showManualForm()">
+      <p><strong>Type:</strong> PDF Document</p>
+      <div class="upload-info" style="margin-top: 15px;">
+        <p><strong>⚠️ Note:</strong> PDF processing is not available on GitHub Pages.</p>
+        <p>Please switch to Manual Entry to login.</p>
+      </div>
+      <button class="btn btn-primary" onclick="switchTab('manual')" style="margin-top: 15px;">
         Switch to Manual Entry
       </button>
-    </div>
-  `;
+    `;
+  }
+}
+
+// Setup drag and drop for upload area
+function setupDragAndDrop() {
+  const uploadArea = document.getElementById('uploadArea');
+  if (!uploadArea) return;
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, () => {
+      uploadArea.classList.add('drag-over');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, () => {
+      uploadArea.classList.remove('drag-over');
+    }, false);
+  });
+
+  uploadArea.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+
+    if (files.length > 0) {
+      const fileInput = document.getElementById('studyLoadFile');
+      fileInput.files = files;
+      handleFileUpload({ target: { files: files } });
+    }
+  }, false);
 }
 
 // ===========================
@@ -233,6 +372,8 @@ function handleFileUpload(event) {
 // ===========================
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('Initializing student interface...');
+
   const loginForm = document.getElementById('loginForm');
   if (loginForm) {
     loginForm.addEventListener('submit', handleLogin);
@@ -243,8 +384,13 @@ document.addEventListener('DOMContentLoaded', () => {
     roomSelect.addEventListener('change', handleRoomSelection);
   }
 
+  // Setup drag and drop
+  setupDragAndDrop();
+
   // Load rooms list on page load
   loadRoomsList();
+
+  console.log('Student interface ready!');
 });
 
 async function handleLogin(event) {
@@ -540,7 +686,7 @@ function showNotification(title, message) {
     popupMessage.textContent = message;
     popup.classList.remove('hidden');
   } else {
-    alert(`${title}: ${message}`);
+    console.warn('Notification popup not found:', title, message);
   }
 }
 
